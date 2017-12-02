@@ -6,16 +6,72 @@ import java.util.Set;
 
 public class Main {
 
-	private static ArrayList<String> documents;
-	private static final String folderPath = "src/folder";
-	private static ArrayList<FileContentReader> filesContent;
-	private static Set<String> words;
+	static ArrayList<String> documents;
+	static final String folderPath = "src/folder";
+	static ArrayList<FileContentReader> filesContent;
+	static ArrayList<String> words;
+	static int matrix[][];
+	static final String[] stopWords = {
+			"and",
+			"not",
+			"or"
+	};
 	
 	public static void main(String[] args) {
 		documents = new ArrayList<>();
 		filesContent = new ArrayList<>();
-		words = new HashSet<>();
+		words = new ArrayList<>();
 		createSet();
+		String query = "information and retrieval";
+		getOperation(query);
+	}
+
+	private static void getOperation(String query) {
+		String []info = query.split("\\s+");
+		int size= info.length;
+		int[] binaries = new int[size];
+		for(int x=0; x<size; x++) {
+			int index;
+			String currentToken =info[x];
+			if((index=exists(currentToken))==-5) {
+				index=words.indexOf(currentToken);
+			}
+			binaries[x]=index;
+		}
+		for(int in=0;in<binaries.length;in++) {
+			int column =binaries[in];
+			if(column > -1 ) {
+				int temp =0;
+				for(int row=0;row<documents.size();row++) {
+					temp *=10;
+					temp+= matrix[row][column];
+				}
+				binaries[in] = temp;
+			}
+			else if(column==-1)
+				binaries[in]=0;
+		}
+		solveBinary(binaries);
+	}
+
+	private static void solveBinary(int[] binaries) {
+		/*
+		  	code to solve the array.
+		  	-2 means and
+		  	-3 means not
+		  	-4 means or		  
+		 */
+	}
+
+	private static int exists(String string) {
+		string = string.toLowerCase();
+		if(string.equals(stopWords[0]))
+			return -2;
+		else if(string.equals(stopWords[1]))
+			return -3;
+		else if(string.equals(stopWords[2]))
+			return -4;
+		return -5;
 	}
 
 	private static void createSet() {
@@ -45,27 +101,27 @@ public class Main {
 	}
 
 	private static void deleteRepeated() {
+		Set<String> temp= new HashSet<>();
 		for (FileContentReader reader : filesContent) {
-			words.addAll(reader.getWords());
+			temp.addAll(reader.getWords());
 		}
+		words.addAll(temp);
 	}
 	
 	private static void createMatrix() {
-		System.out.print("\t");
-		for (String word : words) {
-			System.out.print(word+"\t");
-		}
-		System.out.println();
-		for (FileContentReader reader : filesContent) {
-			System.out.print(documents.get(reader.getFileNumber())+"\t");
-			for (String word : words) {
-				if(reader.exists(word)!=-1)
-					System.out.print("1\t");
+		int rowL =documents.size();
+		int colL = words.size();
+		matrix = new int[rowL][colL];
+		for (int row=0;row < rowL; row++) {
+			FileContentReader reader = filesContent.get(row);
+			for (int col=0; col< colL;col++) {
+				if(reader.exists(words.get(col))!=-1)
+					matrix[row][col] = 1;
 				else
-					System.out.print("0\t");
+					matrix[row][col] = 0;
 			}
-			System.out.println("");
 		}
 	}
+	
 	
 }
